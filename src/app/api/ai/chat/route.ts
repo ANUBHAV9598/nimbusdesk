@@ -212,6 +212,28 @@ const fallbackReply = (payload: Required<ChatPayload>) => {
     ].join("\n");
 };
 
+const resolveReversePrompt = (message: string, fallbackLanguage: string) => {
+    const prompt = message.toLowerCase();
+    const lang = detectLanguageFromPrompt(message, fallbackLanguage);
+    const wantsReverse =
+        prompt.includes("reverse") ||
+        prompt.includes("reverese") ||
+        prompt.includes("revrese") ||
+        prompt.includes("revrse");
+    const wantsString = prompt.includes("string");
+    const wantsNumber = prompt.includes("number");
+    const asksForCode =
+        prompt.includes("code") ||
+        prompt.includes("program") ||
+        prompt.includes("solution") ||
+        prompt.includes("write");
+
+    if (!wantsReverse) return null;
+    if (wantsString) return reverseStringTemplate(lang);
+    if (wantsNumber || asksForCode) return reverseNumberTemplate(lang);
+    return null;
+};
+
 const callGemini = async (payload: Required<ChatPayload>) => {
     const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
     if (!apiKey) return null;
@@ -310,10 +332,23 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ message: "Message is required." }, { status: 400 });
         }
 
+        // Deterministic path for common "reverse" coding prompts.
+        const deterministic = resolveReversePrompt(payload.message, payload.language);
+        if (deterministic) {
+            return NextResponse.json({
+                success: true,
+                reply: deterministic,
+                source: "local",
+            });
+        }
+
         const geminiReply = await callGemini(payload);
         const openAiReply = geminiReply ? null : await callOpenAI(payload);
         const rawReply = geminiReply || openAiReply || fallbackReply(payload);
-        const reply = ensureCodeBlock(rawReply, payload.language);
+        const reply = ensureCodeBlock(
+            rawReply,
+            detectLanguageFromPrompt(payload.message, payload.language)
+        );
 
         return NextResponse.json({
             success: true,
