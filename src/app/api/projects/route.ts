@@ -6,7 +6,7 @@ import { getUserFromRequest } from "@/lib/getUser";
 // This Endpoint creates a new project for the authenticated user. It expects a JSON body with a "title" field. If the title is missing, it returns a 400 Bad Request response. If the user is not authenticated, it returns a 401 Unauthorized response.
 export async function POST(req: NextRequest) {
     try {
-        const user = getUserFromRequest(req);
+        const user = await getUserFromRequest(req);
         const { title } = await req.json();
 
         if (!title) {
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
 // This Endpoint retrieves all projects for the authenticated user, sorted by creation date in descending order. If the user is not authenticated, it returns a 401 Unauthorized response.
 export async function GET(req: NextRequest) {
     try {
-        const user = getUserFromRequest(req);
+        const user = await getUserFromRequest(req);
 
         await connectDB();
 

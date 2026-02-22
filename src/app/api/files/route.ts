@@ -9,7 +9,7 @@ const isValidObjectId = (value: string) => Types.ObjectId.isValid(value);
 
 export async function POST(req: NextRequest) {
     try {
-        const user = getUserFromRequest(req);
+        const user = await getUserFromRequest(req);
         const { name, path, language, projectId, type } = await req.json();
 
         if (!name || !path || !projectId) {
@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
     try {
-        const user = getUserFromRequest(req);
+        const user = await getUserFromRequest(req);
         const projectId = req.nextUrl.searchParams.get("projectId");
 
         if (!projectId) {

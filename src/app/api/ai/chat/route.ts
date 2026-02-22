@@ -317,7 +317,7 @@ const callOpenAI = async (payload: Required<ChatPayload>) => {
 
 export async function POST(req: NextRequest) {
     try {
-        getUserFromRequest(req);
+        await getUserFromRequest(req);
 
         const body = (await req.json()) as ChatPayload;
         const payload: Required<ChatPayload> = {

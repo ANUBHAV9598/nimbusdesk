@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import axios from "@/lib/axios";
 import { AnimatePresence, motion } from "framer-motion";
+import { signOut } from "next-auth/react";
 
 type SessionUser = {
     email: string;
@@ -67,6 +68,7 @@ export default function TopNavbar() {
     const onLogout = async () => {
         try {
             setLoading(true);
+            await signOut({ redirect: false });
             await axios.post("/api/auth/logout");
             setUser(null);
             router.push("/");

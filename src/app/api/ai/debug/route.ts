@@ -227,7 +227,7 @@ const callOpenAI = async ({ code, language, error, fileName }: Required<DebugPay
 
 export async function POST(req: NextRequest) {
     try {
-        getUserFromRequest(req);
+        await getUserFromRequest(req);
 
         const body = (await req.json()) as DebugPayload;
         const payload: Required<DebugPayload> = {
