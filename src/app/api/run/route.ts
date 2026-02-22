@@ -16,6 +16,24 @@ type RunFile = {
     content?: string;
 };
 
+type PistonResponse = {
+    run?: {
+        stdout?: string;
+        stderr?: string;
+        output?: string;
+        code?: number;
+        signal?: string;
+    };
+    compile?: {
+        stdout?: string;
+        stderr?: string;
+        output?: string;
+        code?: number;
+        signal?: string;
+    };
+    message?: string;
+};
+
 const execCommand = (command: string, cwd: string) =>
     new Promise<{ stdout: string; stderr: string }>((resolve, reject) => {
         exec(
@@ -32,6 +50,62 @@ const execCommand = (command: string, cwd: string) =>
     });
 
 const normalize = (value: unknown) => String(value || "").toLowerCase();
+
+const shouldUseRemoteRunner = () =>
+    process.env.CODE_RUNNER_MODE === "remote" || process.env.VERCEL === "1";
+
+const executeWithPiston = async (language: string, code: string) => {
+    const map: Record<string, { language: string; version: string }> = {
+        python: { language: "python", version: "3.10.0" },
+        py: { language: "python", version: "3.10.0" },
+        cpp: { language: "cpp", version: "10.2.0" },
+        "c++": { language: "cpp", version: "10.2.0" },
+        cc: { language: "cpp", version: "10.2.0" },
+        cxx: { language: "cpp", version: "10.2.0" },
+        c: { language: "c", version: "10.2.0" },
+        java: { language: "java", version: "15.0.2" },
+    };
+
+    const target = map[language];
+    if (!target) {
+        throw new Error("Unsupported language for remote execution.");
+    }
+
+    const response = await fetch("https://emkc.org/api/v2/piston/execute", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            language: target.language,
+            version: target.version,
+            files: [{ content: code }],
+            compile_timeout: 10000,
+            run_timeout: 10000,
+            compile_memory_limit: -1,
+            run_memory_limit: -1,
+        }),
+    });
+
+    if (!response.ok) {
+        throw new Error(`Remote runner request failed with status ${response.status}.`);
+    }
+
+    const result = (await response.json()) as PistonResponse;
+    const compileText = [result.compile?.stderr, result.compile?.stdout, result.compile?.output]
+        .filter(Boolean)
+        .join("\n")
+        .trim();
+    const runText = [result.run?.stderr, result.run?.stdout, result.run?.output]
+        .filter(Boolean)
+        .join("\n")
+        .trim();
+    const output = [compileText, runText].filter(Boolean).join("\n").trim();
+
+    if (result.message) {
+        throw new Error(result.message);
+    }
+
+    return output || "No output";
+};
 
 const buildHtmlPreview = (html: string, files: RunFile[]) => {
     const css = files
@@ -194,6 +268,11 @@ export async function POST(req: NextRequest) {
         }
 
         if (["python", "py"].includes(language)) {
+            if (shouldUseRemoteRunner()) {
+                const output = await executeWithPiston(language, code);
+                return NextResponse.json<RunResponse>({ mode: "text", output });
+            }
+
             const filePath = path.join(tempDir, "main.py");
             await writeFile(filePath, code, "utf8");
             const { stdout } = await execCommand(`python "${filePath}"`, tempDir);
@@ -203,7 +282,29 @@ export async function POST(req: NextRequest) {
             });
         }
 
-        if (["cpp", "c++", "cc", "cxx"].includes(language)) {
+        if (["cpp", "c++", "cc", "cxx", "c"].includes(language)) {
+            if (shouldUseRemoteRunner()) {
+                const output = await executeWithPiston(language, code);
+                return NextResponse.json<RunResponse>({ mode: "text", output });
+            }
+
+            if (language === "c") {
+                const filePath = path.join(tempDir, "main.c");
+                const binaryPath = path.join(
+                    tempDir,
+                    process.platform === "win32" ? "main.exe" : "main"
+                );
+                await writeFile(filePath, code, "utf8");
+                await execCommand(`gcc "${filePath}" -o "${binaryPath}"`, tempDir);
+                const runCmd =
+                    process.platform === "win32" ? `"${binaryPath}"` : `./${path.basename(binaryPath)}`;
+                const { stdout } = await execCommand(runCmd, tempDir);
+                return NextResponse.json<RunResponse>({
+                    mode: "text",
+                    output: stdout.trim() || "No output",
+                });
+            }
+
             const filePath = path.join(tempDir, "main.cpp");
             const binaryPath = path.join(tempDir, process.platform === "win32" ? "main.exe" : "main");
             await writeFile(filePath, code, "utf8");
@@ -217,6 +318,11 @@ export async function POST(req: NextRequest) {
         }
 
         if (language === "java") {
+            if (shouldUseRemoteRunner()) {
+                const output = await executeWithPiston(language, code);
+                return NextResponse.json<RunResponse>({ mode: "text", output });
+            }
+
             const filePath = path.join(tempDir, "Main.java");
             await writeFile(filePath, code, "utf8");
             await execCommand(`javac "${filePath}"`, tempDir);
@@ -231,7 +337,7 @@ export async function POST(req: NextRequest) {
             {
                 mode: "text",
                 output:
-                    "Unsupported language. Supported: C++, Java, JavaScript, TypeScript, Python, HTML, CSS, React (JSX/TSX).",
+                    "Unsupported language. Supported: C, C++, Java, JavaScript, TypeScript, Python, HTML, CSS, React (JSX/TSX).",
             },
             { status: 400 }
         );

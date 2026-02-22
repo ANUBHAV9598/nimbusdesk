@@ -30,7 +30,7 @@ It provides:
   - Adjustable font size, minimap, word wrap
   - Resizable explorer, output panel, and AI panel
 - Run & Preview
-  - Run: JavaScript, TypeScript, Python, C++, Java
+  - Run: JavaScript, TypeScript, Python, C, C++, Java
   - Preview: HTML, CSS, React (JSX/TSX)
   - Dockable output panel (bottom/right)
 - AI Assistance
@@ -131,12 +131,15 @@ Optional:
 ```env
 NEXT_PUBLIC_API_URL=
 OPENAI_API_KEY=
+CODE_RUNNER_MODE=local
 ```
 
 Notes:
 - For local: `NEXTAUTH_URL=http://localhost:3000`
 - For Vercel: `NEXTAUTH_URL=https://<your-domain>`
 - Keep `NEXT_PUBLIC_API_URL` empty unless you intentionally use a separate API origin.
+- `CODE_RUNNER_MODE=remote` forces C/C++/Java/Python execution through a remote runner.
+- On Vercel, remote mode is auto-enabled.
 
 ## Local Development
 
@@ -191,9 +194,10 @@ npx tsc --noEmit
 - Backend works local but fails on Vercel
   - Check `MONGODB_URI` access rules and Vercel env values
   - Ensure `NEXT_PUBLIC_API_URL` is not pointing to localhost in production
-- Runtime execution issues for C++/Java/Python
+- Runtime execution issues for C/C++/Java/Python
   - Hosted environments may not include all compilers/runtimes by default
-  - Validate runtime availability where deployed
+  - This project automatically uses a remote runner for these languages on Vercel
+  - You can force remote mode anywhere with `CODE_RUNNER_MODE=remote`
 
 ## Security Notes
 
