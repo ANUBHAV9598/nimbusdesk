@@ -13,7 +13,7 @@ export const getUserFromRequest = async (req: NextRequest): Promise<IJwtPayload>
 
     const nextAuthToken = await getToken({
         req: req as any,
-        secret: process.env.NEXTAUTH_SECRET,
+        secret: process.env.NEXTAUTH_SECRET || process.env.ACCESS_SECRET,
     });
 
     if (!nextAuthToken) throw new Error("Unauthorized");

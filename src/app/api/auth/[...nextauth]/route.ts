@@ -6,6 +6,7 @@ import { connectDB } from "@/lib/db";
 import { User } from "@/models/User";
 
 const handler = NextAuth({
+    secret: process.env.NEXTAUTH_SECRET || process.env.ACCESS_SECRET,
     providers: [
         GoogleProvider({
             clientId: process.env.GOOGLE_CLIENT_ID!,
