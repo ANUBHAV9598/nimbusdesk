@@ -4,7 +4,7 @@ import { IJwtPayload } from "@/types/types";
 import { getToken } from "next-auth/jwt";
 
 export const getUserFromRequest = async (req: NextRequest): Promise<IJwtPayload> => {
-    const token = req.cookies.get("accessToken")?.value;
+    const token = req.cookies.get("accessToken")?.value || req.cookies.get("refreshToken")?.value;
 
     if (token) {
         const decoded = verifyAccessToken(token);
