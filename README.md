@@ -132,6 +132,8 @@ Optional:
 NEXT_PUBLIC_API_URL=
 OPENAI_API_KEY=
 CODE_RUNNER_MODE=local
+CODE_RUNNER_URL=
+CODE_RUNNER_API_KEY=
 ```
 
 Notes:
@@ -140,6 +142,8 @@ Notes:
 - Keep `NEXT_PUBLIC_API_URL` empty unless you intentionally use a separate API origin.
 - `CODE_RUNNER_MODE=remote` forces C/C++/Java/Python execution through a remote runner.
 - On Vercel, remote mode is auto-enabled.
+- `CODE_RUNNER_URL` overrides the default runner endpoint (`https://emkc.org/api/v2/piston/execute`).
+- `CODE_RUNNER_API_KEY` is optional and sent as both `Authorization: Bearer` and `X-API-Key`.
 
 ## Local Development
 
@@ -198,6 +202,7 @@ npx tsc --noEmit
   - Hosted environments may not include all compilers/runtimes by default
   - This project automatically uses a remote runner for these languages on Vercel
   - You can force remote mode anywhere with `CODE_RUNNER_MODE=remote`
+  - If you get `401`, set `CODE_RUNNER_URL` and `CODE_RUNNER_API_KEY` for your runner provider
 
 ## Security Notes
 

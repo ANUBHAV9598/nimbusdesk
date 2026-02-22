@@ -55,6 +55,11 @@ const shouldUseRemoteRunner = () =>
     process.env.CODE_RUNNER_MODE === "remote" || process.env.VERCEL === "1";
 
 const executeWithPiston = async (language: string, code: string) => {
+    const runnerUrl = (
+        process.env.CODE_RUNNER_URL || "https://emkc.org/api/v2/piston/execute"
+    ).trim();
+    const runnerApiKey = (process.env.CODE_RUNNER_API_KEY || "").trim();
+
     const map: Record<string, { language: string; version: string }> = {
         python: { language: "python", version: "3.10.0" },
         py: { language: "python", version: "3.10.0" },
@@ -71,9 +76,15 @@ const executeWithPiston = async (language: string, code: string) => {
         throw new Error("Unsupported language for remote execution.");
     }
 
-    const response = await fetch("https://emkc.org/api/v2/piston/execute", {
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (runnerApiKey) {
+        headers.Authorization = `Bearer ${runnerApiKey}`;
+        headers["X-API-Key"] = runnerApiKey;
+    }
+
+    const response = await fetch(runnerUrl, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({
             language: target.language,
             version: target.version,
@@ -84,6 +95,12 @@ const executeWithPiston = async (language: string, code: string) => {
             run_memory_limit: -1,
         }),
     });
+
+    if (response.status === 401) {
+        throw new Error(
+            "Remote runner unauthorized (401). Configure CODE_RUNNER_URL/CODE_RUNNER_API_KEY or use a self-hosted runner."
+        );
+    }
 
     if (!response.ok) {
         throw new Error(`Remote runner request failed with status ${response.status}.`);
