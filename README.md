@@ -22,13 +22,16 @@ It provides:
   - Create files/folders (including nested creation)
   - Rename and delete files/folders
   - Folder-aware recursive rename/delete handling
-  - Language icon detection
+  - Language inference from filename extension (create + rename)
+  - Dynamic language icon updates after rename
+  - Real language logos for JavaScript, TypeScript, Python, and Java
 - Editor
   - Monaco editor with tabbed files
   - Auto-save with manual save option
   - Theme selection (multiple dark themes)
   - Adjustable font size, minimap, word wrap
   - Resizable explorer, output panel, and AI panel
+  - Responsive mobile workspace (overlay explorer, stacked output/AI panels)
 - Run & Preview
   - Run: JavaScript, TypeScript, Python, C, C++, Java
   - Preview: HTML, CSS, React (JSX/TSX)
@@ -67,7 +70,7 @@ src/
   lib/                 # db, auth helpers, axios, user resolver
   models/              # Mongoose models
   store/               # Zustand store
-  utils/               # file tree + icon mapping
+  utils/               # file tree, language inference, and icon mapping
 ```
 
 ## Application Workflow
