@@ -8,6 +8,7 @@ import FileTree from "./FileTree";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { FilePlus2, FolderPlus } from "lucide-react";
+import { inferLanguageFromName } from "@/utils/inferLanguageFromName";
 
 interface Props {
     projectId: string;
@@ -107,11 +108,10 @@ export default function FileSidebar({ projectId }: Props) {
         const fullPath = createParentPath ? `${createParentPath}/${trimmed}` : trimmed;
 
         if (createType === "file") {
-            const language = trimmed.split(".").pop();
             const res = await axios.post("/api/files", {
                 name: trimmed,
                 path: fullPath,
-                language,
+                language: inferLanguageFromName(trimmed),
                 projectId,
             });
 
@@ -174,7 +174,7 @@ export default function FileSidebar({ projectId }: Props) {
                 name: nextName,
             });
             const updated = res.data.file as FileItem;
-            renameOpenFile(updated._id, updated.name, updated.path);
+            renameOpenFile(updated._id, updated.name, updated.path, updated.language);
             setSelectedItem(updated);
             await fetchFiles();
         } finally {

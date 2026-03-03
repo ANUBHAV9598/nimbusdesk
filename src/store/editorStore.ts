@@ -21,7 +21,7 @@ interface EditorState {
   updateFileContent: (id: string, content: string) => void;
   markFileSaved: (id: string, content: string) => void;
   setSelectedPath: (path: string) => void;
-  renameOpenFile: (id: string, name: string, path: string) => void;
+  renameOpenFile: (id: string, name: string, path: string, language?: string) => void;
 }
 
 export const useEditorStore = create<EditorState>((set, get) => ({
@@ -98,16 +98,16 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     });
   },
 
-  renameOpenFile: (id: string, name: string, path: string) => {
+  renameOpenFile: (id: string, name: string, path: string, language?: string) => {
     const updatedTabs = get().openTabs.map((tab) =>
-      tab._id === id ? { ...tab, name, path } : tab
+      tab._id === id ? { ...tab, name, path, language: language ?? tab.language } : tab
     );
 
     set({
       openTabs: updatedTabs,
       activeTab:
         get().activeTab?._id === id
-          ? { ...get().activeTab!, name, path }
+          ? { ...get().activeTab!, name, path, language: language ?? get().activeTab!.language }
           : get().activeTab,
     });
   },

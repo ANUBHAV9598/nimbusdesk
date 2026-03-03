@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import { File } from "@/models/File";
 import { getUserFromRequest } from "@/lib/getUser";
+import { inferLanguageFromName } from "@/utils/inferLanguageFromName";
 
 const escapeRegex = (value: string) =>
     value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -101,6 +102,9 @@ export async function PATCH(
 
         file.name = nextName;
         file.path = newPath;
+        if (file.type === "file") {
+            file.language = inferLanguageFromName(nextName);
+        }
         await file.save();
 
         if (file.type === "folder") {

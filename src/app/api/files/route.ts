@@ -4,6 +4,7 @@ import { connectDB } from "@/lib/db";
 import { File } from "@/models/File";
 import { Project } from "@/models/Project";
 import { getUserFromRequest } from "@/lib/getUser";
+import { inferLanguageFromName } from "@/utils/inferLanguageFromName";
 
 const isValidObjectId = (value: string) => Types.ObjectId.isValid(value);
 
@@ -52,7 +53,7 @@ export async function POST(req: NextRequest) {
         const newFile = await File.create({
             name,
             path,
-            language,
+            language: language || inferLanguageFromName(name),
             type: "file",
             content: "",
             projectId,

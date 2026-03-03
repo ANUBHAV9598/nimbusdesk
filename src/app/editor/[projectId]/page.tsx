@@ -12,11 +12,27 @@ const SIDEBAR_MAX = 520;
 
 export default function EditorPage() {
     const { projectId } = useParams();
+    const [isMobile, setIsMobile] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [sidebarWidth, setSidebarWidth] = useState(300);
     const [isResizingSidebar, setIsResizingSidebar] = useState(false);
     const dragStartX = useRef(0);
     const dragStartWidth = useRef(300);
+
+    useEffect(() => {
+        const onResize = () => setIsMobile(window.innerWidth < 1024);
+        onResize();
+        window.addEventListener("resize", onResize);
+        return () => window.removeEventListener("resize", onResize);
+    }, []);
+
+    useEffect(() => {
+        if (isMobile) {
+            setIsSidebarOpen(false);
+        } else {
+            setIsSidebarOpen(true);
+        }
+    }, [isMobile]);
 
     useEffect(() => {
         if (!isResizingSidebar) return;
@@ -52,8 +68,8 @@ export default function EditorPage() {
     };
 
     return (
-        <div className="relative flex h-[calc(100dvh-64px)] overflow-hidden bg-[#070b13]">
-            {isSidebarOpen && (
+        <div className="relative flex h-[calc(100dvh-64px)] min-h-0 overflow-hidden bg-[#070b13]">
+            {isSidebarOpen && !isMobile && (
                 <>
                     <div style={{ width: sidebarWidth }} className="h-full shrink-0">
                         <FileSidebar projectId={projectId as string} />
@@ -62,6 +78,20 @@ export default function EditorPage() {
                         className="w-1 h-full shrink-0 cursor-col-resize bg-transparent hover:bg-cyan-500/40"
                         onMouseDown={startSidebarResize}
                     />
+                </>
+            )}
+
+            {isSidebarOpen && isMobile && (
+                <>
+                    <button
+                        type="button"
+                        className="absolute inset-0 z-20 bg-black/50"
+                        onClick={() => setIsSidebarOpen(false)}
+                        aria-label="Close sidebar overlay"
+                    />
+                    <div className="absolute left-0 top-0 z-30 h-full w-[min(86vw,22rem)] border-r border-white/10 shadow-2xl">
+                        <FileSidebar projectId={projectId as string} />
+                    </div>
                 </>
             )}
 
@@ -74,7 +104,7 @@ export default function EditorPage() {
                 {!isSidebarOpen && (
                     <button
                         onClick={() => setIsSidebarOpen(true)}
-                        className="absolute left-3 top-14 z-30 inline-flex items-center gap-2 rounded-md bg-[#101826] border border-white/10 text-zinc-200 px-3 py-1.5 text-xs shadow-lg hover:bg-[#172338]"
+                        className="absolute right-2 top-12 z-30 inline-flex h-8 items-center gap-1.5 whitespace-nowrap rounded-md border border-white/10 bg-[#101826] px-2.5 text-[11px] text-zinc-200 shadow-lg hover:bg-[#172338] sm:hidden"
                     >
                         <PanelLeftOpen size={14} />
                         Explorer

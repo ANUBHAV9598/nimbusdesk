@@ -17,19 +17,19 @@ export default function EditorTabs({ isSidebarOpen, onToggleSidebar }: Props) {
             initial={{ opacity: 0, y: -6 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.18 }}
-            className="h-11 flex items-stretch bg-[#0f1626] border-b border-white/10 text-white"
+            className="h-11 min-w-0 flex items-stretch border-b border-white/10 bg-[#0f1626] text-white"
         >
-            <div className="flex items-center px-2 border-r border-white/10">
+            <div className="flex shrink-0 items-center border-r border-white/10 px-2">
                 <button
                     onClick={onToggleSidebar}
-                    className="inline-flex items-center justify-center w-8 h-8 rounded-md text-zinc-300 hover:bg-[#1a2740] transition-colors"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-zinc-300 transition-colors hover:bg-[#1a2740]"
                     aria-label={isSidebarOpen ? "Close sidebar" : "Open sidebar"}
                 >
                     {isSidebarOpen ? <PanelLeftClose size={15} /> : <PanelLeft size={15} />}
                 </button>
             </div>
 
-            <div className="flex-1 min-w-0 flex items-stretch overflow-x-auto">
+            <div className="flex min-w-0 flex-1 items-stretch overflow-x-auto">
                 {openTabs.map((tab) => {
                     const isUnsaved = tab.content !== tab.savedContent;
                     const isActive = activeTab?._id === tab._id;
@@ -37,18 +37,18 @@ export default function EditorTabs({ isSidebarOpen, onToggleSidebar }: Props) {
                     return (
                         <button
                             key={tab._id}
-                            className={`group relative inline-flex items-center gap-2 px-4 text-sm border-r border-white/10 min-w-0 transition-colors ${
+                            className={`group relative inline-flex min-w-0 items-center gap-2 border-r border-white/10 px-2.5 text-sm transition-colors sm:px-4 ${
                                 isActive
                                     ? "bg-[#16213a] text-white shadow-[inset_0_-2px_0_0_rgba(34,211,238,0.9)]"
                                     : "bg-transparent text-zinc-300 hover:bg-[#111d32]"
                             }`}
                             onClick={() => setActiveTab(tab)}
                         >
-                            <span className="truncate max-w-44">{tab.name}</span>
-                            {isUnsaved && <span className="text-amber-400">•</span>}
+                            <span className="max-w-28 truncate sm:max-w-44">{tab.name}</span>
+                            {isUnsaved && <span className="text-amber-400">*</span>}
                             <X
                                 size={14}
-                                className="opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-red-400 transition"
+                                className="text-zinc-400 opacity-100 transition hover:text-red-400 md:opacity-0 md:group-hover:opacity-100"
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     closeTab(tab._id);

@@ -1,5 +1,4 @@
 import {
-    MdCode,
     MdCss,
     MdDataObject,
     MdDescription,
@@ -8,9 +7,16 @@ import {
     MdImage,
     MdInsertDriveFile,
     MdSettings,
-    MdSmartToy,
 } from "react-icons/md";
-import { SiC, SiCplusplus, SiGnubash, SiOpenjdk } from "react-icons/si";
+import { FaJava } from "react-icons/fa6";
+import {
+    SiC,
+    SiCplusplus,
+    SiGnubash,
+    SiJavascript,
+    SiPython,
+    SiTypescript,
+} from "react-icons/si";
 
 const iconClass = "w-4 h-4 shrink-0";
 
@@ -35,7 +41,7 @@ export const getFileIcon = (name: string, type: string, language?: string) => {
         ["ts", "typescript", "tsx"].includes(lowerLang) ||
         ["ts", "tsx"].includes(extension)
     ) {
-        return <MdDataObject className={`${iconClass} text-sky-400`} />;
+        return <SiTypescript className={`${iconClass} text-[#3178C6]`} />;
     }
 
     if (
@@ -45,7 +51,7 @@ export const getFileIcon = (name: string, type: string, language?: string) => {
         ["js", "javascript", "jsx", "node", "nodejs", "mjs", "cjs"].includes(lowerLang) ||
         ["js", "jsx", "mjs", "cjs"].includes(extension)
     ) {
-        return <MdCode className={`${iconClass} text-yellow-300`} />;
+        return <SiJavascript className={`${iconClass} text-[#F7DF1E]`} />;
     }
 
     if (lowerName.endsWith(".json") || lowerLang === "json" || extension === "json") {
@@ -71,7 +77,7 @@ export const getFileIcon = (name: string, type: string, language?: string) => {
     }
 
     if (lowerName.endsWith(".py") || ["py", "python"].includes(lowerLang) || extension === "py") {
-        return <MdSmartToy className={`${iconClass} text-lime-300`} />;
+        return <SiPython className={`${iconClass} text-[#4B8BBE]`} />;
     }
 
     if (
@@ -88,7 +94,7 @@ export const getFileIcon = (name: string, type: string, language?: string) => {
         lowerLang === "java" ||
         extension === "java"
     ) {
-        return <SiOpenjdk className={`${iconClass} text-red-400`} />;
+        return <FaJava className={`${iconClass} text-[#ED8B00]`} />;
     }
 
     if (

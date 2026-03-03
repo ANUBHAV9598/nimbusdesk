@@ -74,6 +74,9 @@ const themeOptions: { value: EditorTheme; label: string }[] = [
 ];
 
 const defineCustomThemes = (monaco: any) => {
+    /* -------------------------
+       Your Custom Themes
+    -------------------------- */
     monaco.editor.defineTheme("ce-midnight", {
         base: "vs-dark",
         inherit: true,
@@ -113,6 +116,48 @@ const defineCustomThemes = (monaco: any) => {
             "editor.selectionBackground": "#264F78",
         },
     });
+
+    /* -------------------------
+       ENABLE FULL JS/TS INTELLISENSE
+    -------------------------- */
+
+    monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
+        noSemanticValidation: false,
+        noSyntaxValidation: false,
+    });
+
+    monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
+        noSemanticValidation: false,
+        noSyntaxValidation: false,
+    });
+
+    monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
+        target: monaco.languages.typescript.ScriptTarget.ES2020,
+        allowNonTsExtensions: true,
+        moduleResolution: monaco.languages.typescript.ModuleResolutionKind.NodeJs,
+        module: monaco.languages.typescript.ModuleKind.CommonJS,
+        jsx: monaco.languages.typescript.JsxEmit.React,
+        esModuleInterop: true,
+        allowJs: true,
+        typeRoots: ["node_modules/@types"],
+    });
+
+    monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
+        target: monaco.languages.typescript.ScriptTarget.ES2020,
+        moduleResolution: monaco.languages.typescript.ModuleResolutionKind.NodeJs,
+        module: monaco.languages.typescript.ModuleKind.CommonJS,
+        jsx: monaco.languages.typescript.JsxEmit.React,
+        esModuleInterop: true,
+        allowJs: true,
+        typeRoots: ["node_modules/@types"],
+    });
+
+    /* -------------------------
+        Improve Suggestion Behavior
+    -------------------------- */
+
+    monaco.languages.typescript.javascriptDefaults.setEagerModelSync(true);
+    monaco.languages.typescript.typescriptDefaults.setEagerModelSync(true);
 };
 
 export default function CodeEditor() {
@@ -143,6 +188,7 @@ export default function CodeEditor() {
     const [settings, setSettings] = useState<EditorSettings>(defaultSettings);
     const [cursorInfo, setCursorInfo] = useState({ line: 1, col: 1 });
     const [copiedMsgIndex, setCopiedMsgIndex] = useState<number | null>(null);
+    const [isMobile, setIsMobile] = useState(false);
 
     const shellRef = useRef<HTMLDivElement | null>(null);
     const dragStartY = useRef(0);
@@ -154,6 +200,21 @@ export default function CodeEditor() {
     const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const settingsRef = useRef<HTMLDivElement | null>(null);
     const chatEndRef = useRef<HTMLDivElement | null>(null);
+
+    useEffect(() => {
+        const onResize = () => setIsMobile(window.innerWidth < 1024);
+        onResize();
+        window.addEventListener("resize", onResize);
+        return () => window.removeEventListener("resize", onResize);
+    }, []);
+
+    useEffect(() => {
+        if (!isMobile) return;
+        if (outputDock !== "bottom") setOutputDock("bottom");
+        if (isResizingOutput) setIsResizingOutput(false);
+        if (isResizingOutputWidth) setIsResizingOutputWidth(false);
+        if (isResizingAiPanel) setIsResizingAiPanel(false);
+    }, [isMobile, outputDock, isResizingOutput, isResizingOutputWidth, isResizingAiPanel]);
 
     useEffect(() => {
         const raw = localStorage.getItem(SETTINGS_KEY);
@@ -183,7 +244,7 @@ export default function CodeEditor() {
     }, [chatMessages, chatLoading]);
 
     useEffect(() => {
-        if (!isResizingOutput) return;
+        if (isMobile || !isResizingOutput) return;
         const onMove = (event: MouseEvent) => {
             const delta = dragStartY.current - event.clientY;
             const base = dragStartHeight.current + delta;
@@ -202,10 +263,10 @@ export default function CodeEditor() {
             document.body.style.userSelect = "";
             document.body.style.cursor = "";
         };
-    }, [isResizingOutput]);
+    }, [isResizingOutput, isMobile]);
 
     useEffect(() => {
-        if (!isResizingOutputWidth) return;
+        if (isMobile || !isResizingOutputWidth) return;
         const onMove = (event: MouseEvent) => {
             const delta = dragStartX.current - event.clientX;
             const base = dragStartWidth.current + delta;
@@ -224,10 +285,10 @@ export default function CodeEditor() {
             document.body.style.userSelect = "";
             document.body.style.cursor = "";
         };
-    }, [isResizingOutputWidth]);
+    }, [isResizingOutputWidth, isMobile]);
 
     useEffect(() => {
-        if (!isResizingAiPanel) return;
+        if (isMobile || !isResizingAiPanel) return;
 
         const onMove = (event: MouseEvent) => {
             const delta = aiDragStartX.current - event.clientX;
@@ -253,7 +314,7 @@ export default function CodeEditor() {
             document.body.style.userSelect = "";
             document.body.style.cursor = "";
         };
-    }, [isResizingAiPanel]);
+    }, [isResizingAiPanel, isMobile]);
 
     useEffect(() => {
         const onKeyDown = (event: KeyboardEvent) => {
@@ -500,10 +561,10 @@ export default function CodeEditor() {
                 <button
                     onClick={sendChat}
                     disabled={chatLoading || !chatInput.trim()}
-                    className="inline-flex items-center gap-1 rounded-md bg-cyan-500 px-3 py-2 text-sm font-medium text-black hover:bg-cyan-400 disabled:opacity-60"
+                    className="inline-flex shrink-0 items-center gap-1 rounded-md bg-cyan-500 px-3 py-2 text-sm font-medium text-black hover:bg-cyan-400 disabled:opacity-60"
                 >
                     <Send size={14} />
-                    Send
+                    <span className="hidden sm:inline">Send</span>
                 </button>
             </div>
         </div>
@@ -544,57 +605,59 @@ export default function CodeEditor() {
     return (
         <motion.div ref={shellRef} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.22 }} className="h-full flex flex-col bg-[#0d111b]">
             <div className="sticky top-0 z-20 border-b border-white/10 bg-zinc-950/80 backdrop-blur-xl">
-                <div className="px-3 py-2 flex items-center justify-between gap-3">
+                <div className="flex flex-col gap-2 px-2.5 py-2 sm:px-3 md:flex-row md:items-center md:justify-between">
                     <div className="min-w-0">
                         <p className="text-sm text-zinc-100 truncate">{activeTab.name}</p>
                         <div className="flex items-center gap-2 text-xs text-zinc-400">
                             <Code2 size={12} />
                             <span>{activeTab.language || "plaintext"}</span>
-                            <span className="text-zinc-600">|</span>
-                            <span>Ln {cursorInfo.line}, Col {cursorInfo.col}</span>
-                            <span className="text-zinc-600">|</span>
+                            <span className="hidden text-zinc-600 sm:inline">|</span>
+                            <span className="hidden sm:inline">Ln {cursorInfo.line}, Col {cursorInfo.col}</span>
+                            <span className="hidden text-zinc-600 sm:inline">|</span>
                             <span>{saveLabel}</span>
                         </div>
                     </div>
 
-                    <div ref={settingsRef} className="relative flex items-center gap-2">
-                        <button onClick={() => setSettingsOpen((p) => !p)} className="inline-flex items-center gap-1 rounded-md border border-white/10 bg-[#121a29] px-2.5 py-1.5 text-xs text-zinc-200 hover:bg-[#18233a]">
+                    <div ref={settingsRef} className="relative flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0">
+                        <button onClick={() => setSettingsOpen((p) => !p)} className="inline-flex shrink-0 items-center gap-1 rounded-md border border-white/10 bg-[#121a29] px-2.5 py-1.5 text-xs text-zinc-200 hover:bg-[#18233a]">
                             <Settings2 size={14} />
-                            Editor
+                            <span className="hidden sm:inline">Editor</span>
                         </button>
                         <button
                             onClick={() => setIsAiPanelOpen((prev) => !prev)}
-                            className="inline-flex items-center gap-1 rounded-md border border-white/10 bg-[#121a29] px-2.5 py-1.5 text-xs text-zinc-200 hover:bg-[#18233a]"
+                            className="inline-flex shrink-0 items-center gap-1 rounded-md border border-white/10 bg-[#121a29] px-2.5 py-1.5 text-xs text-zinc-200 hover:bg-[#18233a]"
                         >
                             {isAiPanelOpen ? <PanelRightClose size={14} /> : <PanelRightOpen size={14} />}
-                            AI Panel
+                            <span className="hidden sm:inline">AI Panel</span>
                         </button>
-                        <button
-                            onClick={() => {
-                                setOutputDock((prev) => (prev === "bottom" ? "right" : "bottom"));
-                                setIsOutputOpen(true);
-                            }}
-                            className="inline-flex items-center gap-1 rounded-md border border-white/10 bg-[#121a29] px-2.5 py-1.5 text-xs text-zinc-200 hover:bg-[#18233a]"
-                        >
-                            {outputDock === "bottom" ? <Columns2 size={14} /> : <Rows2 size={14} />}
-                            {outputDock === "bottom" ? "Dock Right" : "Dock Bottom"}
-                        </button>
-                        <button onClick={() => setIsOutputOpen((p) => !p)} className="inline-flex items-center gap-1 rounded-md border border-white/10 bg-[#121a29] px-2.5 py-1.5 text-xs text-zinc-200 hover:bg-[#18233a]">
+                        {!isMobile && (
+                            <button
+                                onClick={() => {
+                                    setOutputDock((prev) => (prev === "bottom" ? "right" : "bottom"));
+                                    setIsOutputOpen(true);
+                                }}
+                                className="inline-flex shrink-0 items-center gap-1 rounded-md border border-white/10 bg-[#121a29] px-2.5 py-1.5 text-xs text-zinc-200 hover:bg-[#18233a]"
+                            >
+                                {outputDock === "bottom" ? <Columns2 size={14} /> : <Rows2 size={14} />}
+                                <span className="hidden sm:inline">{outputDock === "bottom" ? "Dock Right" : "Dock Bottom"}</span>
+                            </button>
+                        )}
+                        <button onClick={() => setIsOutputOpen((p) => !p)} className="inline-flex shrink-0 items-center gap-1 rounded-md border border-white/10 bg-[#121a29] px-2.5 py-1.5 text-xs text-zinc-200 hover:bg-[#18233a]">
                             {isOutputOpen ? <PanelBottomClose size={14} /> : <PanelBottomOpen size={14} />}
-                            {isOutputOpen ? "Hide Output" : "Show Output"}
+                            <span className="hidden sm:inline">{isOutputOpen ? "Hide Output" : "Show Output"}</span>
                         </button>
-                        <button onClick={() => saveFile(activeTab._id, activeTab.content || "")} className="inline-flex items-center gap-1 rounded-md border border-white/10 bg-[#121a29] px-2.5 py-1.5 text-xs text-zinc-200 hover:bg-[#18233a]">
+                        <button onClick={() => saveFile(activeTab._id, activeTab.content || "")} className="inline-flex shrink-0 items-center gap-1 rounded-md border border-white/10 bg-[#121a29] px-2.5 py-1.5 text-xs text-zinc-200 hover:bg-[#18233a]">
                             <Save size={14} />
-                            Save
+                            <span className="hidden sm:inline">Save</span>
                         </button>
-                        <button onClick={runCode} disabled={running} className="inline-flex items-center gap-2 rounded-lg bg-cyan-500 px-4 py-2 text-sm font-semibold text-black hover:bg-cyan-400 disabled:opacity-60">
+                        <button onClick={runCode} disabled={running} className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-cyan-500 px-3 py-2 text-sm font-semibold text-black hover:bg-cyan-400 disabled:opacity-60 sm:px-4">
                             <Play size={14} />
                             {running ? "Running..." : "Run"}
                         </button>
 
                         <AnimatePresence>
                             {settingsOpen && (
-                                <motion.div initial={{ opacity: 0, y: 8, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 8, scale: 0.98 }} className="absolute right-0 top-11 w-72 rounded-xl border border-white/10 bg-[#111827] p-3 shadow-2xl">
+                                <motion.div initial={{ opacity: 0, y: 8, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 8, scale: 0.98 }} className="absolute right-0 top-11 w-[min(18rem,calc(100vw-1rem))] rounded-xl border border-white/10 bg-[#111827] p-3 shadow-2xl">
                                     <p className="text-xs text-zinc-400 mb-2">Editor Preferences</p>
                                     <label className="block text-xs text-zinc-400 mb-1">Theme</label>
                                     <select
@@ -631,9 +694,9 @@ export default function CodeEditor() {
                 </div>
             </div>
 
-            <div className="flex-1 min-h-0 min-w-0 flex">
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col lg:flex-row">
                 <div className="flex-1 min-h-0 min-w-0 flex flex-col">
-                    {outputDock === "right" && isOutputOpen ? (
+                    {!isMobile && outputDock === "right" && isOutputOpen ? (
                         <div className="flex-1 min-h-0 min-w-0 flex">
                             <div className="flex-1 min-h-0 min-w-0 border-b border-white/10">
                                 <Editor
@@ -656,7 +719,7 @@ export default function CodeEditor() {
                                 />
                             </div>
                             <div
-                                className="w-1 h-full shrink-0 cursor-col-resize bg-transparent hover:bg-cyan-500/40"
+                                className="h-full w-1 shrink-0 cursor-col-resize bg-transparent hover:bg-cyan-500/40"
                                 onMouseDown={(event) => {
                                     dragStartX.current = event.clientX;
                                     dragStartWidth.current = outputWidth;
@@ -690,14 +753,23 @@ export default function CodeEditor() {
                                         smoothScrolling: true,
                                         scrollBeyondLastLine: false,
                                         wordWrap: settings.wordWrap ? "on" : "off",
+
+                                        // 🔥 Add These
+                                        quickSuggestions: true,
+                                        suggestOnTriggerCharacters: true,
+                                        parameterHints: { enabled: true },
+                                        wordBasedSuggestions: "currentDocument",
+                                        tabCompletion: "on",
+                                        acceptSuggestionOnEnter: "on",
                                     }}
                                 />
                             </div>
                             {isOutputOpen && (
                                 <>
                                     <div
-                                        className="h-1 shrink-0 cursor-row-resize bg-transparent hover:bg-cyan-500/40"
+                                        className={`h-1 shrink-0 bg-transparent hover:bg-cyan-500/40 ${isMobile ? "cursor-default" : "cursor-row-resize"}`}
                                         onMouseDown={(event) => {
+                                            if (isMobile) return;
                                             dragStartY.current = event.clientY;
                                             dragStartHeight.current = outputHeight;
                                             setIsResizingOutput(true);
@@ -705,7 +777,7 @@ export default function CodeEditor() {
                                     />
                                     <div
                                         className="shrink-0 min-h-0 flex flex-col"
-                                        style={{ height: outputHeight }}
+                                        style={isMobile ? { height: "min(45dvh, 20rem)" } : { height: outputHeight }}
                                     >
                                         {outputTabs}
                                         {outputBody}
@@ -716,7 +788,7 @@ export default function CodeEditor() {
                     )}
                 </div>
 
-                {isAiPanelOpen && (
+                {isAiPanelOpen && !isMobile && (
                     <>
                         <div
                             className="w-1 h-full shrink-0 cursor-col-resize bg-transparent hover:bg-cyan-500/40"
@@ -755,6 +827,34 @@ export default function CodeEditor() {
                             </div>
                         </aside>
                     </>
+                )}
+
+                {isAiPanelOpen && isMobile && (
+                    <aside className="h-[45dvh] min-h-64 border-t border-white/10 bg-[#0f1728]">
+                        <div className="h-full flex flex-col">
+                            <div className="h-10 border-b border-white/10 px-2.5 flex items-center justify-between">
+                                <div className="inline-flex items-center gap-2 text-xs text-cyan-200">
+                                    <Bot size={13} />
+                                    AI Chat
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <button
+                                        onClick={clearChat}
+                                        className="text-zinc-300 hover:text-white text-xs px-2 py-1 rounded hover:bg-white/10"
+                                    >
+                                        Clear
+                                    </button>
+                                    <button
+                                        onClick={() => setIsAiPanelOpen(false)}
+                                        className="text-zinc-300 hover:text-white text-xs px-2 py-1 rounded hover:bg-white/10"
+                                    >
+                                        Close
+                                    </button>
+                                </div>
+                            </div>
+                            {chatView}
+                        </div>
+                    </aside>
                 )}
             </div>
         </motion.div>

@@ -80,19 +80,19 @@ export default function TopNavbar() {
 
     return (
         <header className="sticky top-0 z-50 h-16 border-b border-white/10 bg-[#0a0f18]/85 backdrop-blur-xl shadow-[0_8px_28px_rgba(0,0,0,0.35)]">
-            <div className="mx-auto max-w-7xl h-full px-4 flex items-center justify-between">
+            <div className="mx-auto flex h-full max-w-7xl items-center justify-between px-3 sm:px-4">
                 <button
-                    className="text-left transition-transform duration-200 hover:scale-[1.01]"
+                    className="min-w-0 text-left transition-transform duration-200 hover:scale-[1.01]"
                     onClick={() => router.push("/dashboard")}
                 >
                     <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-300">NimbusDesk</p>
-                    <p className="text-sm text-zinc-300">Developer Workspace</p>
+                    <p className="hidden text-sm text-zinc-300 sm:block">Developer Workspace</p>
                 </button>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 sm:gap-2">
                     <button
                         onClick={() => router.push("/dashboard")}
-                        className="px-3 py-1.5 rounded-lg border border-transparent text-zinc-200 hover:bg-[#172235] hover:border-white/10 text-sm transition-colors"
+                        className="hidden rounded-lg border border-transparent px-3 py-1.5 text-sm text-zinc-200 transition-colors hover:border-white/10 hover:bg-[#172235] sm:inline-flex"
                     >
                         Dashboard
                     </button>
@@ -122,7 +122,7 @@ export default function TopNavbar() {
                                 animate={{ opacity: 1, y: 0, scale: 1 }}
                                 exit={{ opacity: 0, y: 8, scale: 0.98 }}
                                 transition={{ duration: 0.18 }}
-                                className="absolute right-0 mt-2 w-72 rounded-xl border border-white/10 bg-[#101a2a] shadow-2xl p-3"
+                                className="absolute right-0 mt-2 w-[min(18rem,calc(100vw-1rem))] rounded-xl border border-white/10 bg-[#101a2a] p-3 shadow-2xl"
                             >
                                 <p className="text-xs text-zinc-400">Account</p>
                                 <p className="text-sm text-zinc-100 mt-1 break-all">

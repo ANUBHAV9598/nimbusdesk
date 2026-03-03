@@ -146,7 +146,7 @@ export default function DashboardPage() {
 
     return (
         <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#10274a_0%,_#0a0d14_35%,_#05070c_100%)] text-white">
-            <div className="mx-auto max-w-6xl px-6 py-10">
+            <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
                 <motion.section
                     initial={{ opacity: 0, y: 14 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -203,7 +203,7 @@ export default function DashboardPage() {
                 </motion.section>
 
                 <section className="mt-8">
-                    <div className="mb-4 flex items-center justify-between">
+                    <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
                         <h2 className="text-xl font-semibold tracking-tight">Your Projects</h2>
                         <button
                             onClick={fetchProjects}
