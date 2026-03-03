@@ -309,13 +309,24 @@ export default function CodeEditor() {
     };
 
     const scheduleSave = (id: string, content: string) => {
+        if (!activeTab || activeTab._id !== id) return;
+        
         if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
-        saveTimeoutRef.current = setTimeout(() => saveFile(id, content), 600);
+        
+        saveTimeoutRef.current = setTimeout(() => {
+            if (activeTab._id === id) {
+                saveFile(id, content);
+            }
+        }, 1200);
     };
 
     const handleChange = (value: string | undefined) => {
         if (!activeTab) return;
         const newContent = value || "";
+        
+        // Prevent unnecessary saves
+        if (newContent === activeTab.content) return;
+        
         updateFileContent(activeTab._id, newContent);
         scheduleSave(activeTab._id, newContent);
     };
